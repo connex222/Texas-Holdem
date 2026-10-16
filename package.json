@@ -1,0 +1,14 @@
+{
+  "name": "texas-holdem-party",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Render-ready Texas Hold'em party poker with TV host and phone controllers",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "dev": "node server.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pokersolver": "^2.1.4",
+    "socket.io": "^4.8.1"
+  }
+}
