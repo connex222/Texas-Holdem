@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>THE GILDED DECK | Private Card Room</title>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root{color-scheme:dark}body{font-family:Inter,ui-sans-serif,system-ui;background:#09090b;color:#f4f4f5}
+.table-felt{background:radial-gradient(ellipse at center,#166534 0%,#14532d 54%,#052e16 100%);border:10px solid #713f12;box-shadow:inset 0 0 0 3px #a16207,0 18px 50px #0008}
+.playing-pulse{animation:pulse 1.1s infinite}@keyframes pulse{0%,100%{box-shadow:0 0 0 0 #fbbf2466}50%{box-shadow:0 0 0 9px #fbbf2400}}
+.card{width:clamp(42px,6vw,72px);height:clamp(62px,8vw,100px);border-radius:8px;background:#fafafa;color:#18181b;display:flex;flex-direction:column;justify-content:space-between;padding:5px;font-weight:800;box-shadow:0 3px 7px #0006; flex-shrink:0}
+.card.red{color:#dc2626}.card.back{background:repeating-linear-gradient(45deg,#1e3a8a,#1e3a8a 5px,#dbeafe 5px,#dbeafe 7px);border:4px solid white}
+.seat{min-width:110px;background:#18181be8;border:1px solid #52525b;border-radius:14px;padding:10px;text-align:center}
+.btn{min-height:48px;border-radius:12px;padding:10px 15px;font-weight:800}
+input,select{color:#18181b}
+
+:root{--gold:#f2c775;--deep:#06140f}body{background:radial-gradient(ellipse at 50% -25%,#244a3a 0%,#091a16 45%,#030a09 100%);background-attachment:fixed;letter-spacing:.012em}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.15;background-image:repeating-linear-gradient(110deg,transparent 0 3px,#ffffff08 4px 5px);z-index:-1}header{background:#07120fdb!important;backdrop-filter:blur(18px);border-color:#b98d4350!important}#setup,#controller{background:linear-gradient(145deg,#17362d,#091a16 65%,#0b1815)!important;border:1px solid #d8a95865!important;box-shadow:0 28px 80px #0008,inset 0 1px #f7db9b18}#setup{position:relative;overflow:hidden}#setup:before{content:'♠';position:absolute;right:-20px;top:-60px;font-size:250px;color:#d8ad5d0c;pointer-events:none}.table-felt{background:radial-gradient(ellipse at 48% 42%,#197356 0%,#0d4a39 46%,#05291f 77%,#031711 100%);border:13px ridge #9d7135;box-shadow:inset 0 0 0 5px #e2bc70,inset 0 0 0 9px #342318,inset 0 30px 90px #0008,0 24px 0 -10px #2c170c,0 42px 80px #000a;transform:perspective(1400px) rotateX(4deg);transition:transform .5s}.table-felt:hover{transform:perspective(1400px) rotateX(0deg)}.card{border:1px solid #e6d8bc;border-radius:9px;box-shadow:1px 2px 0 #aaa,2px 4px 0 #777,5px 9px 17px #0008;transform:rotate(-1deg);animation:deal-in .35s both}.card:nth-child(even){transform:rotate(2deg)}.card.back{background:repeating-linear-gradient(45deg,#123d38,#123d38 5px,#d2ac64 6px,#d2ac64 7px);border:5px double #f6e6b9}.seat{background:linear-gradient(150deg,#254339,#0b1b18);border:1px solid #bd975e75;box-shadow:0 8px 25px #0008,inset 0 1px #ffffff20}.btn{transition:transform .16s,filter .16s,box-shadow .16s;box-shadow:inset 0 1px #ffffff35,0 5px 12px #0004;cursor:pointer}.btn:hover{transform:translateY(-2px);filter:brightness(1.16)}.btn:active{transform:translateY(2px)}#hostBtn,#startBtn{background:linear-gradient(130deg,#eac67e,#a66a25)!important;color:#101a13}#joinBtn,#raiseAction{background:linear-gradient(130deg,#245d59,#123f45)!important}#pot{color:#f9d990;text-shadow:0 3px 0 #805b29,0 0 30px #f6c45d88}#roomCode{color:#f5d48e}#message{color:#f3d38e}input:not([type=range]){background:#f7f0df;color:#14231e}h1,h2{letter-spacing:-.035em}@keyframes deal-in{from{opacity:0;translate:0 -24px;rotate:-12deg}to{opacity:1;translate:0 0}}.brand-mark{display:flex;align-items:center;gap:12px}.brand-icon{display:grid;place-items:center;width:49px;height:49px;border:2px solid #dcb16d;border-radius:14px;background:linear-gradient(145deg,#1b493c,#071c17);color:#f4cd84;font-size:30px;box-shadow:0 4px 16px #0009,inset 0 1px #fff4}.brand-title{font-family:Georgia,serif;font-weight:900;letter-spacing:.1em;color:#f8dc9e;font-size:clamp(16px,3vw,23px);text-shadow:0 2px 7px #000}.ambient-light{position:fixed;top:-200px;left:35%;width:30vw;height:400px;background:#e6b45510;filter:blur(100px);pointer-events:none}.sound-control{border:1px solid #d1ad6877;border-radius:10px;padding:8px 12px;color:#f4d59a;font-size:12px;background:#142b23}.collection{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.game-pill{border:1px solid #b99b6170;border-radius:999px;padding:8px 12px;color:#f1d8a4;background:#152d25;font-size:12px}.game-pill.locked{opacity:.55}#setup h1{font-family:Georgia,serif;color:#f6d69a;font-size:30px}
+</style>
+
+<style>
+/* Phase 2: cinematic identity, tactile surfaces and accessible reduced-motion handling */
+body{font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+header{position:relative;z-index:3;box-shadow:0 12px 40px #0006}
+.brand-icon{border-radius:50%;width:58px;height:58px;transform:rotate(-8deg);border:3px double #efcc83;box-shadow:0 0 0 3px #1b3329,0 8px 22px #000a,inset 0 2px 10px #f4d18933}
+.brand-title{background:linear-gradient(180deg,#fff1c4,#e8b962 65%,#ac7736);color:transparent;background-clip:text;-webkit-background-clip:text}
+#setup{margin-top:clamp(16px,5vh,58px);text-align:center;padding-top:30px}
+#setup label{text-align:left}
+#setup .collection{justify-content:center;border-top:1px solid #b9955236;padding-top:18px}
+#setup h1{font-size:clamp(30px,5vw,48px);line-height:1.1;margin-bottom:14px}
+.casino-emblem{width:116px;height:116px;margin:0 auto 22px;display:grid;place-items:center;position:relative;border-radius:50%;background:radial-gradient(circle at 32% 22%,#326c54,#0b251b 68%);border:6px ridge #bc9048;box-shadow:0 0 0 6px #102a20,0 15px 35px #000a,inset 0 3px 20px #000a}
+.casino-emblem>span:first-child{font-size:64px;color:#f2cf85;text-shadow:0 4px 0 #7b552d,0 0 25px #e7bc6644}
+.emblem-ring{position:absolute;bottom:8px;font:700 10px Georgia,serif;letter-spacing:.55em;color:#f6e4ae}
+.table-felt{isolation:isolate}
+.table-felt:after{content:"";position:absolute;inset:16px;border:2px solid #d5b66d42;border-radius:inherit;pointer-events:none;z-index:-1}
+.felt-insignia{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:240px Georgia,serif;color:#d6b15b0c;pointer-events:none;z-index:-1}
+.table-caption{text-align:center;font-size:10px;letter-spacing:.16em;color:#b7a580;margin-top:12px}
+#players .seat{border-radius:16px;padding:14px;position:relative;overflow:hidden}
+#players .seat:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,#d6af6b88,transparent)}
+#players .seat.playing-pulse{box-shadow:0 0 0 2px #d7ac62,0 0 24px #caa05b77}
+#controller{position:relative}
+#controller:before{content:"YOUR PRIVATE CARDS";display:block;color:#d2b47c;letter-spacing:.24em;font-size:10px;margin-bottom:12px}
+#actions .btn,#hostBtn,#joinBtn,#startBtn{min-height:46px;border-radius:12px;font-weight:800}
+#actions .btn:focus-visible,.btn:focus-visible,.sound-control:focus-visible,input:focus-visible{outline:3px solid #f9d17d;outline-offset:3px}
+.sound-control{white-space:nowrap}
+.sound-control[aria-pressed=true]{background:#385a45;border-color:#f2d08c}
+@media(max-width:540px){header{padding:10px!important}.brand-icon{width:40px;height:40px;font-size:23px}.brand-title{font-size:14px}.brand-mark{gap:7px}.brand-mark .text-xs{font-size:8px;letter-spacing:.08em}.sound-control{font-size:10px;padding:7px}.table-felt{border-width:8px;min-height:265px}.felt-insignia{font-size:145px}#setup{padding:20px}#community{gap:3px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}.table-felt,.table-felt:hover{transform:none}}
+</style>
+<style>
+/* Phase 7: responsive game catalogue and table focus */
+.collection{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;text-align:left}
+.collection .game-pill{display:flex;align-items:center;justify-content:space-between;min-height:44px;border-radius:12px;padding:10px 12px;background:linear-gradient(135deg,#1e4c3a,#10251d);box-shadow:inset 0 1px #f3d7981c,0 5px 15px #0004}
+.collection .game-pill.locked{background:#101c18;opacity:.6;border-style:dashed}
+.collection .game-pill:not(.locked)::after{content:'● LIVE';color:#b8e3a5;font-size:9px;letter-spacing:.08em;margin-left:8px;white-space:nowrap}
+.collection .game-pill.locked::after{content:'COMING';color:#bdad91;font-size:9px;letter-spacing:.08em;margin-left:8px}
+#gameSelect{max-width:100%;min-height:44px}
+@media(max-width:480px){.collection{grid-template-columns:1fr}.collection .game-pill{min-height:42px}}
+</style></head>
+<body class="min-h-screen"><div class="ambient-light"></div>
+<header class="border-b border-zinc-800 px-4 py-3 flex items-center justify-between gap-3">
+ <div class="brand-mark"><div class="brand-icon">♠</div><div><div class="brand-title">THE GILDED DECK</div><div class="text-xs text-amber-100/60 tracking-widest">PRIVATE CARD ROOM · HOLD’EM</div></div></div>
+ <div class="flex items-center gap-2"><button id="ambienceToggle" class="sound-control" aria-pressed="false">◌ Ambience off</button><button id="soundToggle" class="sound-control" aria-pressed="false">♫ Sound off</button><div id="connection" class="text-xs text-amber-300">Connecting…</div></div>
+</header>
+<main class="max-w-6xl mx-auto p-3 sm:p-6">
+<section id="setup" class="max-w-xl mx-auto bg-zinc-900 border border-zinc-800 rounded-2xl p-5 sm:p-7 mt-5">
+ <div class="casino-emblem" aria-hidden="true"><span>♠</span><span class="emblem-ring">G D</span></div><div class="text-amber-200/70 text-xs tracking-[.35em] mb-3">WELCOME TO THE TABLE</div><h1 class="text-2xl font-black mb-2">The night is yours.</h1><p class="text-zinc-400 mb-5">Create a table on the TV, then join from each player's phone.</p>
+ <label class="block text-sm text-zinc-300 mb-1" for="name">Your player name</label><input id="name" maxlength="18" class="w-full rounded-xl p-3 mb-4" placeholder="e.g. Shaun">
+ <div class="grid sm:grid-cols-2 gap-3">
+  <button id="hostBtn" class="btn bg-emerald-700 hover:bg-emerald-600">Host / TV display</button>
+  <div class="flex gap-2"><input id="roomInput" maxlength="4" class="uppercase min-w-0 w-full rounded-xl p-3" placeholder="ROOM"><button id="joinBtn" class="btn bg-indigo-600 hover:bg-indigo-500">Join</button></div>
+ </div>
+ <p id="setupError" class="text-rose-400 text-sm mt-3"></p><div class="collection"><span class="game-pill">♠ Texas Hold’em · Live</span><span class="game-pill" title="Available game">♦ Omaha · Live</span><span class="game-pill" title="Available game">♣ Five-Card Draw · Live</span><span class="game-pill" title="Available game">♥ Blackjack · Live</span><span class="game-pill locked" title="Planned game">♠ Seven-Card Stud · Planned</span><span class="game-pill" title="Available game">♦ Three-Card Brag · Live</span></div>
+</section>
+<section id="game" class="hidden">
+ <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+  <div><div class="text-sm text-zinc-400">ROOM CODE</div><div id="roomCode" class="text-3xl font-black tracking-[.2em]">----</div></div>
+  <div class="flex flex-wrap gap-2 items-center"><label for="gameSelect" class="text-amber-200 text-xs">Game</label><select id="gameSelect" class="rounded-lg bg-emerald-950 text-amber-100 border border-amber-600 p-2"><option value="holdem">Texas Hold’em</option><option value="omaha">Omaha (4 cards)</option><option value="draw">Five-Card Draw</option><option value="blackjack">Blackjack</option><option value="brag">Three-Card Brag</option></select><button id="copyLink" class="btn bg-zinc-800">Copy join link</button><button id="startBtn" class="btn bg-emerald-700 hidden">Start / Next hand</button></div>
+ </div>
+ <div id="qrWrap" class="hidden bg-white text-zinc-900 rounded-xl p-3 w-fit mb-4">
+  <div class="font-bold text-sm mb-2">Scan to join</div><img id="qr" alt="QR code to join table" width="150" height="150"><div id="qrUrl" class="text-[10px] max-w-[150px] break-all mt-1"></div>
+ </div>
+ <div class="table-felt rounded-[38%] sm:rounded-[45%] min-h-[310px] sm:min-h-[420px] p-4 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden">
+  <div class="felt-insignia" aria-hidden="true">♠</div><div class="absolute top-4 text-emerald-100/80 text-xs sm:text-sm font-bold tracking-widest">THE GILDED DECK · HOLD’EM</div>
+  <div class="flex items-center gap-3 mt-4 mb-3"><span class="text-emerald-100 text-xs uppercase">Pot</span><span id="pot" class="text-3xl sm:text-5xl font-black text-amber-300">0</span></div>
+  <div id="dealerHand" class="hidden mb-3"><div class="text-amber-200 text-xs tracking-widest mb-2 text-center">DEALER</div><div id="dealerCards" class="flex gap-2 justify-center"></div></div><div id="community" class="flex gap-1.5 sm:gap-3 justify-center min-h-[100px] items-center"></div>
+  <div id="streetLabel" class="text-emerald-100 text-xs mt-3 uppercase tracking-widest">Waiting for players</div>
+  <div id="currentBet" class="text-emerald-50 text-sm mt-1">Current bet: 0</div>
+ </div>
+ <div class="table-caption">PRIVATE TABLE · PLAY CHIPS ONLY · NO REAL-MONEY WAGERING</div><div id="message" class="text-center text-amber-300 font-bold my-4 min-h-6"></div>
+ <div id="players" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5"></div>
+ <section id="controller" class="hidden bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5">
+  <div class="flex items-center justify-between gap-3 mb-3"><h2 class="font-black text-xl">Your hand</h2><div id="turnBadge" class="text-sm text-zinc-400">Waiting…</div></div>
+  <div id="hole" class="flex flex-wrap gap-3 mb-4"></div>
+  <div id="drawControls" class="hidden rounded-xl border border-amber-500/50 bg-emerald-950 p-3 mb-4"><p class="text-amber-200 text-sm mb-2">Tap up to three cards to exchange. Tap again to keep a card.</p><div id="drawSelection" class="text-xs text-amber-100 mb-2">0 selected</div><button id="drawSubmit" class="btn bg-amber-600 text-zinc-950 font-bold">Stand pat (keep all five)</button></div>
+  <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+   <div class="bg-zinc-800 rounded-xl p-3"><div class="text-xs text-zinc-400">Your stack</div><div id="myStack" class="font-black text-xl">0</div></div>
+   <div class="bg-zinc-800 rounded-xl p-3"><div class="text-xs text-zinc-400">Committed</div><div id="myCommitted" class="font-black text-xl">0</div></div>
+   <div class="bg-zinc-800 rounded-xl p-3"><div class="text-xs text-zinc-400">To call</div><div id="toCall" class="font-black text-xl">0</div></div>
+  </div>
+  <div id="blackjackActions" class="hidden grid grid-cols-3 gap-2 mb-3"><button data-bj="hit" class="btn bg-emerald-700">Hit</button><button data-bj="stand" class="btn bg-amber-600 text-zinc-950">Stand</button><button data-bj="double" class="btn bg-indigo-700">Double</button></div><div id="blackjackResult" class="text-amber-200 font-bold mb-2"></div><div id="bragControls" class="hidden grid grid-cols-2 gap-2 mb-3"><button id="bragLook" class="btn bg-amber-700">Look at cards</button><button id="bragSee" class="btn bg-indigo-700">See opponent</button><button id="bragPlay" class="btn bg-emerald-700">Play stake</button><button id="bragFold" class="btn bg-rose-700">Fold</button><button id="bragRaise" class="btn bg-violet-700">Raise stake</button><p id="bragRules" class="text-xs text-amber-200 col-span-2">Blind pays 1× · Seen pays 2×. A see costs 2×.</p></div><div id="actions" class="hidden">
+   <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+    <button data-action="fold" class="btn bg-rose-700">Fold</button><button id="checkCall" class="btn bg-emerald-700">Check</button><button id="raiseAction" class="btn bg-indigo-600">Raise</button><button data-action="all-in" class="btn bg-amber-600 text-zinc-950">All-In</button>
+   </div>
+   <div class="bg-zinc-800 rounded-xl p-3">
+    <div class="flex justify-between text-sm mb-2"><label for="raiseSlider">Raise to</label><strong id="raiseValue">20</strong></div>
+    <input id="raiseSlider" type="range" min="20" max="1000" value="40" class="w-full">
+    <div class="grid grid-cols-3 gap-2 mt-3"><button data-preset="min" class="btn bg-zinc-700">Min</button><button data-preset="half" class="btn bg-zinc-700">Half pot</button><button data-preset="pot" class="btn bg-zinc-700">Pot</button></div>
+   </div>
+  </div>
+ </section>
+ <div id="toast" class="text-rose-400 text-sm text-center mt-3 min-h-5"></div>
+</section>
+</main>
+<script>
+const socket = io();
+// Sound is strictly opt-in; audio is only activated by a user gesture.
+let soundOn = false, audioCtx = null, lastStreet = null, lastTurn = null;
+let ambienceOn = false, ambienceNodes = null;
+function tone(freq=440,duration=.09,type='sine',gain=.035){if(!soundOn)return;try{audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();const osc=audioCtx.createOscillator(),vol=audioCtx.createGain();osc.type=type;osc.frequency.setValueAtTime(freq,audioCtx.currentTime);vol.gain.setValueAtTime(gain,audioCtx.currentTime);vol.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+duration);osc.connect(vol);vol.connect(audioCtx.destination);osc.start();osc.stop(audioCtx.currentTime+duration)}catch(e){console.warn('Audio unavailable',e)}}
+function cue(name){if(name==='deal'){tone(310,.08,'triangle');setTimeout(()=>tone(390,.09,'triangle'),90)}else if(name==='turn'){tone(550,.11);setTimeout(()=>tone(740,.16),115)}else if(name==='win'){[523,659,784].forEach((f,i)=>setTimeout(()=>tone(f,.3,'sine',.045),i*110))}else tone(260,.08,'triangle')}
+// A quiet, locally synthesised casino-room texture; no external audio files or autoplay.
+function stopAmbience(){
+ if(!ambienceNodes)return;
+ const {source,filter,gain}=ambienceNodes;
+ try{gain.gain.setTargetAtTime(.00001,audioCtx.currentTime,.15);setTimeout(()=>{try{source.stop();source.disconnect();filter.disconnect();gain.disconnect()}catch{}},700)}catch{}
+ ambienceNodes=null;
+}
+function startAmbience(){
+ try{
+  audioCtx ||= new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  if(ambienceNodes)return;
+  const duration=2,buffer=audioCtx.createBuffer(1,Math.round(audioCtx.sampleRate*duration),audioCtx.sampleRate),data=buffer.getChannelData(0);
+  // Low-volume filtered noise simulates a distant room without looping a downloaded recording.
+  for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*.15;
+  const source=audioCtx.createBufferSource(),filter=audioCtx.createBiquadFilter(),gain=audioCtx.createGain();
+  source.buffer=buffer;source.loop=true;filter.type='lowpass';filter.frequency.value=340;gain.gain.value=.00001;
+  source.connect(filter);filter.connect(gain);gain.connect(audioCtx.destination);source.start();
+  gain.gain.setTargetAtTime(.075,audioCtx.currentTime,.35);
+  ambienceNodes={source,filter,gain};
+ }catch(e){console.warn('Ambience unavailable',e);ambienceOn=false;document.getElementById('ambienceToggle').textContent='◌ Ambience unavailable'}
+}
+document.getElementById('ambienceToggle').addEventListener('click',e=>{
+ ambienceOn=!ambienceOn;
+ e.currentTarget.setAttribute('aria-pressed',String(ambienceOn));
+ e.currentTarget.textContent=ambienceOn?'◉ Ambience on':'◌ Ambience off';
+ if(ambienceOn)startAmbience();else stopAmbience();
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&ambienceNodes)stopAmbience();
+ else if(!document.hidden&&ambienceOn)startAmbience();
+});
+document.getElementById('soundToggle').addEventListener('click',e=>{soundOn=!soundOn;e.currentTarget.textContent=soundOn?'♫ Sound on':'♫ Sound off';e.currentTarget.setAttribute('aria-pressed',String(soundOn));if(soundOn)cue('turn')});
+
+let roomCode = null, playerId = null, isHost = false, publicState = null, privateState = null;
+const $ = id => document.getElementById(id);
+$("gameSelect").onchange = e => {
+ if(!isHost)return;
+ socket.emit("select-game",{roomCode,gameType:e.target.value},res=>{
+  if(!res?.ok)alert(res?.error||"Could not change game");
+ });
+};
+const setupError = msg => $("setupError").textContent = msg || "";
+const suitRed = s => s === "♥" || s === "♦";
+function cardEl(c, hidden=false) {
+ const el = document.createElement("div");
+ if (hidden || !c) { el.className = "card back"; return el; }
+ el.className = "card " + (suitRed(c.suit) ? "red" : "");
+ const rank = c.rank === "T" ? "10" : c.rank;
+ el.innerHTML = `<span>${rank}</span><span class="text-2xl self-center">${c.suit}</span><span class="self-end">${rank}</span>`;
+ return el;
+}
+const audioObserver = new MutationObserver(()=>{if(!soundOn)return;const street=document.getElementById('streetLabel')?.textContent;if(street&&lastStreet!==null&&street!==lastStreet)cue('deal');lastStreet=street;const turn=document.getElementById('turnBadge')?.textContent;if(turn&&lastTurn!==null&&turn!==lastTurn&&/your turn/i.test(turn))cue('turn');lastTurn=turn});
+window.addEventListener('DOMContentLoaded',()=>audioObserver.observe(document.getElementById('game'),{subtree:true,childList:true,characterData:true}));
+function showGame() {
+ $("setup").classList.add("hidden"); $("game").classList.remove("hidden");
+ $("roomCode").textContent = roomCode;
+ const url = `${location.origin}${location.pathname}?room=${roomCode}`;
+ $("qrUrl").textContent = url;
+ $("qr").src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+ $("qrWrap").classList.toggle("hidden", !isHost);
+ $("startBtn").classList.toggle("hidden", !isHost);
+ $("controller").classList.toggle("hidden", isHost);
+}
+function toast(msg) { $("toast").textContent = msg || ""; }
+function act(action, amount) { if (roomCode) socket.emit("player-action", { roomCode, action, amount }); }
+$("hostBtn").onclick = () => {
+ setupError("");
+ socket.emit("create-room", {name: $("name").value || "Host"}, res => {
+  if (!res?.ok) return setupError("Could not create room.");
+  roomCode = res.roomCode; playerId = res.playerId; isHost = true; sessionStorage.setItem("gildedSession",JSON.stringify({roomCode,resumeToken:res.resumeToken})); showGame();
+ });
+};
+$("joinBtn").onclick = () => {
+ setupError("");
+ const code = $("roomInput").value.trim().toUpperCase();
+ if (code.length !== 4) return setupError("Enter the 4-character room code.");
+ socket.emit("join-room", {roomCode: code, name: $("name").value || "Player"}, res => {
+  if (!res?.ok) return setupError(res?.error || "Could not join.");
+  roomCode = res.roomCode; playerId = res.playerId; isHost = false; sessionStorage.setItem("gildedSession",JSON.stringify({roomCode,resumeToken:res.resumeToken})); showGame();
+ });
+};
+socket.on("connect",()=>{
+ try{
+  const saved=JSON.parse(sessionStorage.getItem("gildedSession")||"null");
+  if(!saved?.roomCode||!saved?.resumeToken)return;
+  socket.emit("resume-session",saved,res=>{
+   if(!res?.ok){toast("Previous session unavailable; join a new table if needed.");return;}
+   roomCode=res.roomCode;playerId=res.playerId;isHost=res.isHost;showGame();
+  });
+ }catch(e){console.warn("Session restore failed",e)}
+});
+$("copyLink").onclick = async () => {
+ const url = `${location.origin}${location.pathname}?room=${roomCode}`;
+ try { await navigator.clipboard.writeText(url); $("copyLink").textContent = "Copied!"; }
+ catch { prompt("Copy this join link:", url); }
+};
+$("startBtn").onclick = () => socket.emit("start-game", {roomCode});
+$("community").replaceChildren(...Array.from({length:5},()=>cardEl(null,true)));
+const selectedDraw = new Set();
+$("drawSubmit").onclick = () => socket.emit("draw-cards",{roomCode,indices:[...selectedDraw]},result=>{
+ if(!result?.ok)return toast(result?.error||"Could not exchange cards");
+ selectedDraw.clear();
+});
+$("bragLook").onclick=()=>act("see-cards");
+$("bragSee").onclick=()=>act("see");
+$("bragPlay").onclick=()=>act("call");
+$("bragFold").onclick=()=>act("fold");
+$("bragRaise").onclick=()=>{const base=privateState?.bragStake||20;const value=Number(prompt(`New blind stake (${base+1}–${base*2})`,String(base*2)));if(Number.isSafeInteger(value))act("raise",value);};
+$("checkCall").onclick = () => act(privateState?.canCheck ? "check" : "call");
+$("raiseAction").onclick = () => act("raise", Number($("raiseSlider").value));
+document.querySelectorAll("[data-action]").forEach(b => b.onclick = () => act(b.dataset.action));
+$("raiseSlider").oninput = () => $("raiseValue").textContent = $("raiseSlider").value;
+document.querySelectorAll("[data-preset]").forEach(b => b.onclick = () => {
+ if (!privateState) return;
+ const min = Number($("raiseSlider").min), max = Number($("raiseSlider").max);
+ let val = min;
+ if (b.dataset.preset === "half") val = privateState.currentBet + Math.max(privateState.callAmount, Math.floor(privateState.pot/2));
+ if (b.dataset.preset === "pot") val = privateState.currentBet + privateState.callAmount + privateState.pot;
+ $("raiseSlider").value = Math.max(min, Math.min(max, val));
+ $("raiseValue").textContent = $("raiseSlider").value;
+});
+document.querySelectorAll("[data-bj]").forEach(b=>b.addEventListener("click",()=>{
+ if(!privateState?.isTurn)return;
+ socket.emit("player-action",{roomCode,action:b.dataset.bj});
+}));
+socket.on("connect", () => $("connection").textContent = "Connected");
+socket.on("disconnect", () => $("connection").textContent = "Reconnecting…");
+socket.on("update-tv", state => {
+ if (roomCode && state.code !== roomCode) return;
+ publicState = state;
+ if (!roomCode) {
+  const wanted = new URLSearchParams(location.search).get("room");
+  if (wanted && wanted.toUpperCase() === state.code) return;
+ }
+ $("dealerHand").classList.toggle("hidden",state.gameType!=="blackjack");
+ $("dealerCards").replaceChildren(...(state.dealerCards||[]).map(c=>cardEl(c, !c)));
+ $("pot").textContent = state.gameType==="blackjack" ? "20 / seat" : state.pot;
+ $("currentBet").textContent = `Current bet: ${state.currentBet}`;
+ $("streetLabel").textContent = state.street.toUpperCase();
+ $("message").textContent = state.message || "";
+ const community = state.community || [];
+ $("community").replaceChildren(...(["draw","blackjack","brag"].includes(state.gameType) ? [] : Array.from({length:5},(_,i)=>community[i] ? cardEl(community[i]) : cardEl(null,true))));
+ $("players").replaceChildren(...state.players.map(p => {
+  const seat = document.createElement("div");
+  seat.className = "seat " + (p.isTurn ? "playing-pulse border-amber-300" : "");
+  const status = p.folded ? "FOLDED" : p.allIn ? "ALL-IN" : !p.connected ? "DISCONNECTED" : p.isTurn ? "YOUR TURN" : "ACTIVE";
+  seat.innerHTML = `<div class="font-bold truncate">${p.isDealer ? "🔘 " : ""}${escapeHtml(p.name)}</div><div class="text-emerald-300 font-black">${p.stack} chips</div><div class="text-xs ${p.folded ? "text-rose-400" : p.allIn ? "text-amber-300" : "text-zinc-400"}">${status}</div><div class="text-xs text-zinc-400">Bet ${p.roundBet}</div>`;
+  return seat;
+ }));
+ $("gameSelect").value = state.gameType || "holdem";
+ $("gameSelect").disabled = !isHost || state.status === "playing";
+ if (isHost) $("startBtn").textContent = state.status === "complete" ? "Deal next hand" : state.status === "playing" ? "Hand in progress" : "Start hand";
+ $("startBtn").disabled = state.status === "playing" || state.players.length < (state.gameType === "blackjack" ? 1 : 2);
+ $("startBtn").classList.toggle("opacity-40", $("startBtn").disabled);
+});
+socket.on("update-player", state => {
+ if (roomCode && state.roomCode !== roomCode) return;
+ if (state.playerId !== playerId) return;
+ privateState = state;
+ $("myStack").textContent = state.stack;
+ $("myCommitted").textContent = state.committed;
+ $("toCall").textContent = state.callAmount;
+ selectedDraw.clear();
+ $("hole").replaceChildren(...(state.hole || []).map((c,i) => {
+   const el=cardEl(c);
+   if(state.canDraw){el.setAttribute("role","button");el.tabIndex=0;el.setAttribute("aria-label",`Select card ${i+1} for exchange`);const toggle=()=>{
+    if(selectedDraw.has(i))selectedDraw.delete(i);else if(selectedDraw.size<3)selectedDraw.add(i);
+    el.style.outline=selectedDraw.has(i)?"3px solid #f4c66c":"none";
+    $("drawSelection").textContent=`${selectedDraw.size} selected`;
+    $("drawSubmit").textContent=selectedDraw.size?`Exchange ${selectedDraw.size} card${selectedDraw.size===1?"":"s"}`:"Stand pat (keep all five)";
+   };el.onclick=toggle;el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle();}};
+   }return el;
+ }));
+ $("drawControls").classList.toggle("hidden",!state.canDraw);
+ $("drawSelection").textContent="0 selected";
+ $("drawSubmit").textContent="Stand pat (keep all five)";
+ $("turnBadge").textContent = state.isTurn ? "YOUR TURN" : state.status === "playing" ? "Waiting for action" : state.status.toUpperCase();
+ $("turnBadge").className = "text-sm " + (state.isTurn ? "text-amber-300 font-black playing-pulse rounded-lg p-2" : "text-zinc-400");
+ $("blackjackActions").classList.toggle("hidden", !(state.blackjack && state.status==="playing" && state.isTurn));
+ $("blackjackResult").textContent=state.blackjackResult||"";
+ document.querySelector('[data-bj="double"]').disabled=!(state.blackjack&&state.hole?.length===2&&state.stack>=state.blackjackStake);
+ $("bragControls").classList.toggle("hidden",!(state.gameType==="brag"&&state.status==="playing"&&state.isTurn));
+ $("bragLook").disabled=!!state.bragSeen;
+ $("bragSee").disabled=!state.bragSeen;
+ $("bragPlay").textContent=`Play ${state.bragCost||20} chips`;
+ $("bragRules").textContent=`Blind stake ${state.bragStake||20} · ${state.bragSeen?"Seen (2×)":"Blind (1×)"} · See costs ${(state.bragStake||20)*2}`;
+ $("actions").classList.toggle("hidden", state.blackjack || state.gameType === "brag" || !(state.status === "playing" && state.isTurn));
+ $("checkCall").textContent = state.canCheck ? "Check" : `Call ${state.callAmount}`;
+ const max = Math.max(1, state.maxRaiseTo), min = Math.min(max, Math.max(1, state.minRaiseTo));
+ $("raiseSlider").min = min; $("raiseSlider").max = max;
+ $("raiseSlider").value = Math.max(min, Math.min(max, Number($("raiseSlider").value) || min));
+ $("raiseValue").textContent = $("raiseSlider").value;
+ if (state.isTurn && navigator.vibrate) navigator.vibrate([80,40,80]);
+});
+socket.on("action-error", msg => toast(msg));
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+const initialRoom = new URLSearchParams(location.search).get("room");
+if (initialRoom) $("roomInput").value = initialRoom.toUpperCase();
+</script>
+</body></html>
