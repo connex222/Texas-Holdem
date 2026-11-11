@@ -1,4 +1,11 @@
-# Texas Hold'em Party Poker (Render)
+# Texas Hold'em Party Poker
+
+> **Status: superseded.** This was the starter build for Shaun's poker game. It has been replaced by **The Gilded Deck** (Hold'em, Omaha, Draw, Blackjack and Brag, live at https://gilded-deck.onrender.com). This repository is kept for reference only; Games Night links to The Gilded Deck instead.
+
+Design notes from the build phases are in `docs/phases/`.
+
+---
+
 
 A starter multiplayer Texas Hold'em app using Node.js, Express, Socket.IO and Pokersolver.
 
